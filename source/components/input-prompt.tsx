@@ -796,7 +796,8 @@ export default function InputPrompt({ value, onChange: emitValue, onSubmit, onPa
         const c = liveRef.current.cursor;
         const before = v.slice(0, c);
         const after = v.slice(c);
-        applyEdit(before + input + after, c + input.length);
+        const normalized = input.replace(/\r\n?/g, "\n");
+        applyEdit(before + normalized + after, c + normalized.length);
         setSelectedSuggestion(0);
       }
     },

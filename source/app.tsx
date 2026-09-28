@@ -32,7 +32,7 @@ import { getAttachment, clearAttachmentRegistry, compactImageAttachments, unregi
 import { getRandomHint } from "./utils/hints.js";
 import { getClipboardImage, type ClipboardImage } from "./utils/clipboard-image.js";
 import { getClipboardText } from "./utils/clipboard-text.js";
-import { useClipboardImageDetector } from "./hooks/use-paste-handler.js";
+import { useClipboardImageDetector, classifyPasteText, MULTILINE_TILE_LINE_THRESHOLD } from "./hooks/use-paste-handler.js";
 import { KeybindingResolver, GLOBAL_ACTIONS, formatKeybinding, formatKeybindings, normalizeKeyEvent, type Keybindings } from "./config/keybindings.js";
 import { getLoopStatus, stopActiveLoop } from "./commands/loop.js";
 import { loadScheduledTasks, cronMatches, markTaskRun } from "./config/scheduler.js";
@@ -650,11 +650,11 @@ export default function App({ config: initialConfig, keybindings, resumeMessages
           handleClipboardImage(img);
           return;
         }
-        const text = await getClipboardText();
-        if (!text) return;
-        if (!text.includes("\n") && /^https?:\/\//.test(text)) {
-          handleShortPaste(text);
-        } else if (text.length >= 50) {
+        const rawText = await getClipboardText();
+        if (!rawText) return;
+        const text = rawText.replace(/\r\n?/g, "\n");
+        const action = classifyPasteText(text);
+        if (action === "tile") {
           handleLargePaste(text);
         } else {
           handleShortPaste(text);
